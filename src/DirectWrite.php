@@ -280,19 +280,25 @@ class DirectWrite
 		if ($fontfamily || $fontstyle || $fontsizePt) {
 			$this->mpdf->SetFont($fontfamily, $fontstyle, $fontsizePt);
 		}
-		$kerning/=100;
-		$fontwidth/=100;
+
+		$kerning /= 100;
+		$fontwidth /= 100;
+
 		if ($kerning == 0) {
-			$this->mpdf->Error('Please use values unequal to zero for kerning (CircularText)');
+			throw new \Mpdf\MpdfException('Please use values unequal to zero for kerning (CircularText)');
 		}
+
 		if ($fontwidth == 0) {
-			$this->mpdf->Error('Please use values unequal to zero for font width (CircularText)');
+			throw new \Mpdf\MpdfException('Please use values unequal to zero for font width (CircularText)');
 		}
+
 		$text = str_replace("\r", '', $text);
-		//circumference
+
+		// circumference
 		$u = ($r * 2) * M_PI;
 		$checking = true;
 		$autoset = false;
+
 		while ($checking) {
 			$t = 0;
 			$w = [];
@@ -339,7 +345,7 @@ class DirectWrite
 			}
 		}
 
-		//total width of string in degrees
+		// total width of string in degrees
 		$d = ($t / $u) * 360;
 
 		$this->mpdf->StartTransform();
@@ -350,43 +356,53 @@ class DirectWrite
 		} else {
 			$this->mpdf->transformRotate($d / 2, $x, $y);
 		}
-		//run through the string
+		// run through the string
 		for ($i = 0; $i < $nb; $i++) {
+
 			if ($align === 'top') {
-				//rotate matrix half of the width of current letter + half of the width of preceding letter
+
+				// rotate matrix half of the width of current letter + half of the width of preceding letter
 				if ($i === 0) {
 					$this->mpdf->transformRotate((($w[$i] / 2) / $u) * 360, $x, $y);
 				} else {
 					$this->mpdf->transformRotate((($w[$i] / 2 + $w[$i - 1] / 2) / $u) * 360, $x, $y);
 				}
+
 				if ($fontwidth !== 1) {
 					$this->mpdf->StartTransform();
 					$this->mpdf->transformScale($fontwidth * 100, 100, $x, $y);
 				}
+
 				$this->mpdf->SetXY($x - $w[$i] / 2, $y - $r);
 			} else {
-				//rotate matrix half of the width of current letter + half of the width of preceding letter
+
+				// rotate matrix half of the width of current letter + half of the width of preceding letter
 				if ($i === 0) {
 					$this->mpdf->transformRotate(-(($w[$i] / 2) / $u) * 360, $x, $y);
 				} else {
 					$this->mpdf->transformRotate(-(($w[$i] / 2 + $w[$i - 1] / 2) / $u) * 360, $x, $y);
 				}
+
 				if ($fontwidth !== 1) {
 					$this->mpdf->StartTransform();
 					$this->mpdf->transformScale($fontwidth * 100, 100, $x, $y);
 				}
 				$this->mpdf->SetXY($x - $w[$i] / 2, $y + $r - $this->mpdf->FontSize);
 			}
+
 			if ($this->mpdf->usingCoreFont) {
 				$c = $text[$i];
 			} else {
 				$c = mb_substr($text, $i, 1, $this->mpdf->mb_enc);
 			}
+
 			$this->mpdf->Cell($w[$i], $this->mpdf->FontSize, $c, 0, 0, 'C'); // mPDF 5.3.53
+
 			if ($fontwidth !== 1) {
 				$this->mpdf->StopTransform();
 			}
 		}
+
 		$this->mpdf->StopTransform();
 
 		// mPDF 5.5.23
